@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from src.books.routes import book_router
+from src.config import SessionLocal
 app=FastAPI()
 
 
