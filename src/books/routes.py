@@ -1,68 +1,60 @@
 
-from fastapi import APIRouter ,status
+from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
-from src.books.book_data import books #imported list of books
-from src.books.schemas import BookType
+from sqlalchemy.orm import Session
 
-book_router=APIRouter()
+from src.books.schemas import BookCreate, BookRead
+from src.db.database import Book, get_db
+
+book_router = APIRouter()
+
+
+# Create a new book
+@book_router.post("/", response_model=BookRead, status_code=status.HTTP_201_CREATED)
+async def create_book(book: BookCreate, db: Session = Depends(get_db)):
+    db_book = Book(title=book.title, author=book.author)
+    db.add(db_book)
+    db.commit()
+    db.refresh(db_book)
+    return db_book
+
 
 # Get all books
-@book_router.get("/")
-async def retrieve_books() ->list:
-    return books
+@book_router.get("/", response_model=list[BookRead])
+async def retrieve_books(db: Session = Depends(get_db)):
+    return db.query(Book).all()
 
 
 # Get book by ID
-@book_router.get("/{book_id}")
-async def get_book(book_id:int):
-    for book in books:
-        if book["id"] == book_id:
-            return book;
+@book_router.get("/{book_id}", response_model=BookRead)
+async def get_book(book_id: int, db: Session = Depends(get_db)):
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return book
 
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Not found")
+
+# Update a book
+@book_router.put("/{book_id}", response_model=BookRead)
+async def update_book(book_id: int, updated_book: BookCreate, db: Session = Depends(get_db)):
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+
+    book.title = updated_book.title
+    book.author = updated_book.author
+    db.commit()
+    db.refresh(book)
+    return book
 
 
 # Delete a book
 @book_router.delete("/{book_id}")
-async def delete_book(book_id: int):
-    for  book in books:
-        if book["id"] == book_id:
-            deleted_book = books.pop(book)
-            return {
-                "message": "Book deleted successfully",
-                "book": deleted_book
-            }
+async def delete_book(book_id: int, db: Session = Depends(get_db)):
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Book not found"
-    )
-
-# Create a new book
-@book_router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_book(book: BookType):
-    books.append(book.model_dump())
-
-    return {
-        "message": "Book created successfully",
-        "book": book
-    }
-
-
-# Update a book
-@book_router.put("/{book_id}")
-async def update_book(book_id: int, updated_book: BookType):
-    for index, book in enumerate(books):
-        if book["id"] == book_id:
-            books[index] = updated_book.model_dump()
-            return {
-                "message": "Book updated successfully",
-                "book": books[index]
-            }
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Book not found"
-    )
-
-
+    db.delete(book)
+    db.commit()
+    return {"message": "Book deleted successfully"}

@@ -1,11 +1,16 @@
-from pydantic import BaseModel
-from datetime import date
+from pydantic import BaseModel, ConfigDict
 
-class BookType (BaseModel):
-    id: int
+
+class BookBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     title: str
     author: str
-    publisher: str
-    published_date: date
-    page_count: int
-    language: str
+
+
+class BookCreate(BookBase):
+    pass
+
+
+class BookRead(BookBase):
+    id: int
