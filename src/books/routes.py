@@ -12,7 +12,14 @@ book_router = APIRouter()
 # Create a new book
 @book_router.post("/", response_model=BookRead, status_code=status.HTTP_201_CREATED)
 async def create_book(book: BookCreate, db: Session = Depends(get_db)):
-    db_book = Book(title=book.title, author=book.author)
+    db_book = Book(
+        title=book.title,
+        author=book.author,
+        publisher=book.publisher,
+        published_date=book.published_date,
+        page_count=book.page_count,
+        language=book.language,
+    )
     db.add(db_book)
     db.commit()
     db.refresh(db_book)
@@ -43,6 +50,10 @@ async def update_book(book_id: int, updated_book: BookCreate, db: Session = Depe
 
     book.title = updated_book.title
     book.author = updated_book.author
+    book.publisher = updated_book.publisher
+    book.published_date = updated_book.published_date
+    book.page_count = updated_book.page_count
+    book.language = updated_book.language
     db.commit()
     db.refresh(book)
     return book

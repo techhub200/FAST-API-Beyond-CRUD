@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from src.books.routes import book_router
-#from src.config import SessionLocal
-#from src.db import database
+
 
 app=FastAPI()
 
