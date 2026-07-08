@@ -7,11 +7,26 @@ from src.books.schemas import BookCreate, BookRead
 from src.db.database import Book, get_db
 
 book_router = APIRouter()
+access_token_bearer = Access_Token_Bearer()
 
+
+# Get all books
+@book_router.get("/", response_model=list[BookRead])
+async def retrieve_books(db: Session = Depends(get_db),user_details: dict = Depends(access_token_bearer)):
+    return db.query(Book).all()
+
+
+# Get book by ID
+@book_router.get("/{book_id}", response_model=BookRead)
+async def get_book(book_id: int, db: Session = Depends(get_db),user_details: dict = Depends(access_token_bearer)):
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return book
 
 # Create a new book
 @book_router.post("/", response_model=BookRead, status_code=status.HTTP_201_CREATED)
-async def create_book(book: BookCreate, db: Session = Depends(get_db)):
+async def create_book(book: BookCreate, db: Session = Depends(get_db),user_details: dict = Depends(access_token_bearer)):
     db_book = Book(
         title=book.title,
         author=book.author,
@@ -26,24 +41,11 @@ async def create_book(book: BookCreate, db: Session = Depends(get_db)):
     return db_book
 
 
-# Get all books
-@book_router.get("/", response_model=list[BookRead])
-async def retrieve_books(db: Session = Depends(get_db)):
-    return db.query(Book).all()
-
-
-# Get book by ID
-@book_router.get("/{book_id}", response_model=BookRead)
-async def get_book(book_id: int, db: Session = Depends(get_db)):
-    book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-    return book
 
 
 # Update a book
 @book_router.put("/{book_id}", response_model=BookRead)
-async def update_book(book_id: int, updated_book: BookCreate, db: Session = Depends(get_db)):
+async def update_book(book_id: int, updated_book: BookCreate, db: Session = Depends(get_db),user_details: dict = Depends(access_token_bearer)):
     book = db.query(Book).filter(Book.id == book_id).first()
     if not book:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
@@ -61,7 +63,7 @@ async def update_book(book_id: int, updated_book: BookCreate, db: Session = Depe
 
 # Delete a book
 @book_router.delete("/{book_id}")
-async def delete_book(book_id: int, db: Session = Depends(get_db)):
+async def delete_book(book_id: int, db: Session = Depends(get_db),user_details: dict = Depends(access_token_bearer)):
     book = db.query(Book).filter(Book.id == book_id).first()
     if not book:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
