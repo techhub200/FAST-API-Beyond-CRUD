@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
-
+from src.auth.dependencies import Access_Token_Bearer
 from src.books.schemas import BookCreate, BookRead
 from src.db.database import Book, get_db
 

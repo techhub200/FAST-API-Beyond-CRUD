@@ -6,6 +6,8 @@ from dotenv import load_dotenv  #Imports the load_dotenv function from the pytho
 import os
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
+JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 engine = create_engine(DATABASE_URL, echo=True)
 
 
@@ -14,3 +16,4 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
+
