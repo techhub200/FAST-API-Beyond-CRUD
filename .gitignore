@@ -5,6 +5,4 @@ __pycache__/
 .env
 .vscode/
 LEARNING_Q_AND_A.md
-inspect_db.py
-fix_auth_table.py
-check_rows.py
+REDIS_ACCESS_TOKEN_REVOCATION.md

@@ -1,7 +1,11 @@
 from passlib.context import CryptContext
 from datetime import timedelta, datetime
-from src.config import JWT_SECRET, JWT_ALGORITHM
+import uuid
+
 import jwt
+
+from src.config import JWT_SECRET, JWT_ALGORITHM
+from src.db.redis import is_access_token_blacklisted
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -13,11 +17,14 @@ def generate_hashed_password(password: str):
 def verify_password(plain_password: str, hashed_password: str):
     return password_context.verify(plain_password, hashed_password)
 
-#main function to create tokens 
+
+# main function to create tokens
+
 def _create_token(token_type: str, user_data: dict, expiry: timedelta):
     payload = {
         "type": token_type,
         "user": user_data,
+        "jti": str(uuid.uuid4()),
         "exp": datetime.utcnow() + expiry,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -30,7 +37,6 @@ def create_access_token(user_data: dict, expiry: timedelta):
 def create_refresh_token(user_data: dict, expiry: timedelta):
     # Stateless refresh token (JWT only). No DB persistence.
     return _create_token("refresh", user_data, expiry)
-
 
 def _decode_token(token: str):
     try:
@@ -51,4 +57,5 @@ def decode_refresh_token(token: str):
     if payload.get("type") != "refresh":
         raise Exception("Invalid token type")
     return payload
+
 

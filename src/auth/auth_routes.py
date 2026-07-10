@@ -11,11 +11,15 @@ from src.auth.utils import create_access_token, create_refresh_token, decode_ref
 from src.auth.utils import verify_password
 from src.db.database import get_db
 from src.auth.dependencies import Access_Token_Bearer
+from src.db.redis import add_access_token_to_blacklist
+
+from datetime import datetime
 
 
 auth_router = APIRouter()
 user_service = User_Service()
 access_token_bearer = Access_Token_Bearer()
+
 
 #REGISTER 
 @auth_router.post("/Sign_Up", status_code=status.HTTP_201_CREATED)
@@ -70,5 +74,25 @@ async def Refresh(data: RefreshTokenRequestModel):
 @auth_router.delete("/Delete_user/{user_id}")
 async def Delete_user(user_id: int, db: Session = Depends(get_db)):
     return await user_service.Delete_user(user_id, db)
+
+
+@auth_router.post("/logout")
+async def logout(token_data=Depends(access_token_bearer)):
+    payload = token_data["payload"]
+
+    jti = payload["jti"]
+    exp_dt = datetime.fromtimestamp(payload["exp"])
+
+    add_access_token_to_blacklist(
+        jti=jti,
+        exp=exp_dt,
+    )
+
+    return {"message": "Logged out (access token revoked)"}
+
+
+
+
+
 
 
