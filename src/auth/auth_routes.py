@@ -12,7 +12,7 @@ from src.auth.utils import verify_password
 from src.db.database import get_db
 from src.auth.dependencies import Access_Token_Bearer
 from src.db.redis import add_access_token_to_blacklist
-
+from src.auth.dependencies import get_current_user
 from datetime import datetime
 
 
@@ -20,6 +20,10 @@ auth_router = APIRouter()
 user_service = User_Service()
 access_token_bearer = Access_Token_Bearer()
 
+
+@auth_router.get("/me", response_model=UserCreateModel)
+async def get_me(user=Depends(get_current_user)):
+    return user
 
 #REGISTER 
 @auth_router.post("/Sign_Up", status_code=status.HTTP_201_CREATED)
@@ -77,7 +81,8 @@ async def Delete_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @auth_router.post("/logout")
-async def logout(token_data=Depends(access_token_bearer)):
+async def logout(token_data=Depends(access_token_bearer), user=Depends(role_required("admin"))):
+
     payload = token_data["payload"]
 
     jti = payload["jti"]

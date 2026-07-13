@@ -9,6 +9,7 @@ class AuthUser(Base):
 
     User_id = Column(Integer, primary_key=True)
     Username = Column(String, nullable=False, unique=True)
+    Role = Column(String ,nullable=False)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     created_at = Column(DateTime, nullable=False)
